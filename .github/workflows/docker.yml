@@ -1,0 +1,40 @@
+name: LeadFlow CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.ACR_LOGIN_SERVER }}/leadflow-backend:latest
+            ${{ secrets.ACR_LOGIN_SERVER }}/leadflow-backend:${{ github.sha }}
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.ACR_LOGIN_SERVER }}/leadflow-frontend:latest
+            ${{ secrets.ACR_LOGIN_SERVER }}/leadflow-frontend:${{ github.sha }}
